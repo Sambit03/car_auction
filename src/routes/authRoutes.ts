@@ -7,10 +7,17 @@ const router = Router();
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
 router.post("/token", async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
+
+    if (!username || !password) {
+      res.status(400).json({
+        error: "Bad request",
+        message: "Username and password are required",
+      });
+      return;
+    }
 
     if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
       res.status(401).json({
