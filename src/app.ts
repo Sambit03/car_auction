@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import dotenv from "dotenv";
+import helmet from "helmet";
 dotenv.config();
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -18,6 +19,32 @@ import { verifyToken } from "./middleware/verifyToken";
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    frameguard: {
+      action: "deny",
+    },
+    xssFilter: true,
+    noSniff: true,
+    referrerPolicy: {
+      policy: "strict-origin-when-cross-origin",
+    },
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
