@@ -1,6 +1,6 @@
 # Car Auction API
 
-A production-ready RESTful API for managing car auctions built with **Express.js**, **TypeScript**, and **Drizzle ORM** with PostgreSQL. Features comprehensive security, validation, rate limiting, and 100% test coverage.
+The Car Auction API is a backend application designed to manage an online car auction platform. It provides a structured way to handle operations like adding and updating car listings, managing dealers, running auctions, and placing bids all through a **RESTful API** built using **Express.js** and **TypeScript**. The project uses PostgreSQL **NeonDb** as the main database and **Drizzle ORM** for type-safe database interactions.
 
 ## Features
 
@@ -181,7 +181,7 @@ curl -H "Authorization: Bearer eyJhbGci..." http://localhost:3000/api/v1/cars
 
 **Complete Documentation**: See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed request/response examples, validation rules, and error codes.
 
-## 📊 Database Schema
+## Database Schema
 
 ### Cars Table
 
