@@ -3,6 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 dotenv.config();
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -49,6 +50,41 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    error: "Too many requests",
+    message: "Too many requests from this IP, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    error: "Too many authentication attempts",
+    message:
+      "Too many login attempts from this IP, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+});
+
+const strictLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: {
+    error: "Rate limit exceeded",
+    message: "Too many requests, please slow down.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -57,12 +93,13 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-app.use("/api/v1/auction", authRoutes);
+app.use("/api/v1/auction", authLimiter, authRoutes);
 
-app.use("/api", verifyToken, carRoutes);
-app.use("/api", verifyToken, dealerRoutes);
-app.use("/api", verifyToken, auctionRoutes);
-app.use("/api", verifyToken, bidRoutes);
+app.use("/api", generalLimiter, verifyToken, carRoutes);
+app.use("/api", generalLimiter, verifyToken, dealerRoutes);
+app.use("/api", generalLimiter, verifyToken, auctionRoutes);
+app.use("/api/auctions/:auctionId/bids", strictLimiter);
+app.use("/api", generalLimiter, verifyToken, bidRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

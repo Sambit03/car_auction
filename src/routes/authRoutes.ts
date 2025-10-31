@@ -8,8 +8,6 @@ const router = Router();
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-console.log("Admin Credentials:", ADMIN_USERNAME, ADMIN_PASSWORD);
-
 router.post("/token", async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
