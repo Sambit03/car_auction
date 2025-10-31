@@ -1,10 +1,14 @@
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 const router = Router();
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+console.log("Admin Credentials:", ADMIN_USERNAME, ADMIN_PASSWORD);
 
 router.post("/token", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,10 +26,11 @@ router.post("/token", async (req: Request, res: Response): Promise<void> => {
     if (!jwtSecret) {
       res.status(500).json({
         error: "Internal server error",
-        message: "JWT secret not configured",
+        message: "JWT_SECRET is not configured",
       });
       return;
     }
+
     const token = jwt.sign({ username: ADMIN_USERNAME }, jwtSecret, {
       expiresIn: "24h",
     });
