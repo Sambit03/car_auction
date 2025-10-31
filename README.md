@@ -301,8 +301,6 @@ npm test
 - Supertest for HTTP testing
 - Real database integration tests
 
-See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for detailed testing documentation.
-
 ### Manual Testing with cURL
 
 1. **Get authentication token**:
@@ -369,11 +367,7 @@ car_auction/
 ├── tsconfig.json                 # TypeScript configuration
 ├── jest.config.js                # Jest test configuration
 ├── drizzle.config.ts             # Drizzle ORM configuration
-├── API_DOCUMENTATION.md          # Complete API reference
-├── TESTING_GUIDE.md              # Test documentation
-├── RATE_LIMITING.md              # Rate limiting details
-├── HELMET_SECURITY.md            # Security headers documentation
-└── DRIZZLE_ZOD_GUIDE.md          # Validation implementation guide
+└── API_DOCUMENTATION.md          # Complete API reference
 ```
 
 ## NPM Scripts
@@ -414,8 +408,6 @@ npm run db:studio    # Open Drizzle Studio (database GUI)
 - Download Options
 - Cross-Domain Policies
 
-See [HELMET_SECURITY.md](./HELMET_SECURITY.md) for complete details.
-
 ### 4. Rate Limiting (Three Tiers)
 
 **Authentication Rate Limit**:
@@ -436,8 +428,6 @@ See [HELMET_SECURITY.md](./HELMET_SECURITY.md) for complete details.
 - Limit: 10 requests per 1 minute
 - Purpose: Prevent bid spam
 
-See [RATE_LIMITING.md](./RATE_LIMITING.md) for complete details.
-
 ### 5. Input Validation
 
 - Automatic validation using Zod schemas
@@ -445,8 +435,6 @@ See [RATE_LIMITING.md](./RATE_LIMITING.md) for complete details.
 - Field-level error messages
 - Prevents SQL injection via Drizzle ORM
 - Sanitizes all user input
-
-See [DRIZZLE_ZOD_GUIDE.md](./DRIZZLE_ZOD_GUIDE.md) for implementation details.
 
 ## Error Handling
 
@@ -513,11 +501,7 @@ NODE_ENV=development
 
 ## Documentation
 
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Complete API reference with all endpoints, request/response examples, and cURL commands
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive testing documentation with 60 test cases
-- **[RATE_LIMITING.md](./RATE_LIMITING.md)** - Rate limiting implementation and configuration
-- **[HELMET_SECURITY.md](./HELMET_SECURITY.md)** - Security headers configuration and best practices
-- **[DRIZZLE_ZOD_GUIDE.md](./DRIZZLE_ZOD_GUIDE.md)** - Input validation implementation guide
+For complete API reference with all endpoints, request/response examples, and cURL commands, see **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**
 
 ## Development Workflow
 
