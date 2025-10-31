@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../app";
-import { cars } from "../db/schema";
+import { cars, insertCarSchema } from "../db/schema";
+import { validateRequest } from "../middleware/validateRequest";
 
 const router = Router();
 
@@ -62,48 +63,36 @@ router.get("/cars/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.post("/cars", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { make, model, year } = req.body;
+router.post(
+  "/cars",
+  validateRequest(insertCarSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { make, model, year } = req.body;
 
-    if (!make || !model || !year) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "Make, model, and year are required",
+      const newCar = await db
+        .insert(cars)
+        .values({
+          make,
+          model,
+          year,
+        })
+        .returning();
+
+      res.status(201).json({
+        success: true,
+        message: "Car created successfully",
+        data: newCar[0],
       });
-      return;
-    }
-
-    if (typeof year !== "number" || year < 1900 || year > 2100) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "Invalid year",
+    } catch (error) {
+      console.error("Error creating car:", error);
+      res.status(500).json({
+        error: "Internal server error",
+        message: "Failed to create car",
       });
-      return;
     }
-
-    const newCar = await db
-      .insert(cars)
-      .values({
-        make,
-        model,
-        year,
-      })
-      .returning();
-
-    res.status(201).json({
-      success: true,
-      message: "Car created successfully",
-      data: newCar[0],
-    });
-  } catch (error) {
-    console.error("Error creating car:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to create car",
-    });
   }
-});
+);
 
 router.put("/cars/:id", async (req: Request, res: Response): Promise<void> => {
   try {

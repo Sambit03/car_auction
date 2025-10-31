@@ -1,7 +1,15 @@
 import { Router, Request, Response } from "express";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { db } from "../app";
-import { auctions, cars, bids, dealers } from "../db/schema";
+import {
+  auctions,
+  cars,
+  bids,
+  dealers,
+  insertAuctionSchema,
+} from "../db/schema";
+import { validateRequest } from "../middleware/validateRequest";
+import { z } from "zod";
 
 const router = Router();
 router.get("/auctions", async (req: Request, res: Response): Promise<void> => {
@@ -275,89 +283,72 @@ router.get(
     }
   }
 );
-router.post("/auctions", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { carId, startTime, startingPrice, endTime, createdBy } = req.body;
-    if (!carId || !startTime || !startingPrice) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "carId, startTime, and startingPrice are required",
+router.post(
+  "/auctions",
+  validateRequest(insertAuctionSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { carId, startTime, startingPrice, endTime, createdBy } = req.body;
+
+      const car = await db
+        .select()
+        .from(cars)
+        .where(eq(cars.carId, carId))
+        .limit(1);
+
+      if (car.length === 0) {
+        res.status(404).json({
+          error: "Not found",
+          message: "Car not found",
+        });
+        return;
+      }
+
+      const start = new Date(startTime);
+      const end = endTime ? new Date(endTime) : null;
+
+      if (end && end <= start) {
+        res.status(400).json({
+          error: "Bad request",
+          message: "End time must be after start time",
+        });
+        return;
+      }
+
+      const auctionData: any = {
+        carId,
+        startTime: start,
+        startingPrice: startingPrice.toString(),
+        status: "DRAFT",
+      };
+
+      if (end) {
+        auctionData.endTime = end;
+      }
+
+      if (createdBy) {
+        auctionData.createdBy = createdBy;
+      }
+
+      const newAuction = await db
+        .insert(auctions)
+        .values(auctionData)
+        .returning();
+
+      res.status(201).json({
+        success: true,
+        message: "Auction created successfully",
+        data: newAuction[0],
       });
-      return;
-    }
-    const car = await db
-      .select()
-      .from(cars)
-      .where(eq(cars.carId, carId))
-      .limit(1);
-
-    if (car.length === 0) {
-      res.status(404).json({
-        error: "Not found",
-        message: "Car not found",
+    } catch (error) {
+      console.error("Error creating auction:", error);
+      res.status(500).json({
+        error: "Internal server error",
+        message: "Failed to create auction",
       });
-      return;
     }
-    const start = new Date(startTime);
-    const end = endTime ? new Date(endTime) : null;
-
-    if (isNaN(start.getTime())) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "Invalid start time",
-      });
-      return;
-    }
-
-    if (end && isNaN(end.getTime())) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "Invalid end time",
-      });
-      return;
-    }
-
-    if (end && end <= start) {
-      res.status(400).json({
-        error: "Bad request",
-        message: "End time must be after start time",
-      });
-      return;
-    }
-
-    const auctionData: any = {
-      carId,
-      startTime: start,
-      startingPrice: startingPrice.toString(),
-      status: "DRAFT",
-    };
-
-    if (end) {
-      auctionData.endTime = end;
-    }
-
-    if (createdBy) {
-      auctionData.createdBy = createdBy;
-    }
-
-    const newAuction = await db
-      .insert(auctions)
-      .values(auctionData)
-      .returning();
-
-    res.status(201).json({
-      success: true,
-      message: "Auction created successfully",
-      data: newAuction[0],
-    });
-  } catch (error) {
-    console.error("Error creating auction:", error);
-    res.status(500).json({
-      error: "Internal server error",
-      message: "Failed to create auction",
-    });
   }
-});
+);
 router.put(
   "/auctions/:id",
   async (req: Request, res: Response): Promise<void> => {

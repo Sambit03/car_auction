@@ -2,7 +2,9 @@ import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { db } from "../app";
-import { dealers } from "../db/schema";
+import { dealers, insertDealerSchema } from "../db/schema";
+import { validateRequest } from "../middleware/validateRequest";
+import { z } from "zod";
 
 const router = Router();
 router.get("/dealers", async (req: Request, res: Response): Promise<void> => {
@@ -77,26 +79,19 @@ router.get(
     }
   }
 );
+const dealerRegisterSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(100),
+  password: z.string().min(6),
+});
+
 router.post(
   "/dealers/register",
+  validateRequest(dealerRegisterSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { name, email, password } = req.body;
-      if (!name || !email || !password) {
-        res.status(400).json({
-          error: "Bad request",
-          message: "Name, email, and password are required",
-        });
-        return;
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        res.status(400).json({
-          error: "Bad request",
-          message: "Invalid email format",
-        });
-        return;
-      }
+
       const existingDealer = await db
         .select()
         .from(dealers)

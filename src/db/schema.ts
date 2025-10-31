@@ -7,6 +7,8 @@ import {
   varchar,
   decimal,
 } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 export const cars = pgTable("car", {
   carId: serial("car_id").primaryKey(),
@@ -54,3 +56,80 @@ export const auctions = pgTable("auction", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const insertCarSchema = createInsertSchema(cars, {
+  make: z.string().min(1).max(100),
+  model: z.string().min(1).max(100),
+  year: z
+    .number()
+    .int()
+    .min(1900)
+    .max(new Date().getFullYear() + 1),
+}).omit({
+  carId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const selectCarSchema = createSelectSchema(cars);
+
+export const insertDealerSchema = createInsertSchema(dealers, {
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(100),
+  passwordHash: z.string().min(6),
+}).omit({
+  dealerId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const selectDealerSchema = createSelectSchema(dealers);
+
+export const insertBidSchema = createInsertSchema(bids, {
+  auctionId: z.number().int().positive(),
+  dealerId: z.number().int().positive(),
+  bidAmount: z.string().regex(/^\d+(\.\d{1,2})?$/),
+  previousBid: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
+}).omit({
+  bidId: true,
+  timePlaced: true,
+});
+
+export const selectBidSchema = createSelectSchema(bids);
+
+export const insertAuctionSchema = createInsertSchema(auctions, {
+  createdBy: z.number().int().positive(),
+  carId: z.number().int().positive(),
+  startingPrice: z.string().regex(/^\d+(\.\d{1,2})?$/),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  status: z
+    .enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"])
+    .default("DRAFT"),
+  currentHighestBid: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
+  winnerBidId: z.number().int().positive().optional(),
+}).omit({
+  auctionId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const selectAuctionSchema = createSelectSchema(auctions);
+
+export type InsertCar = z.infer<typeof insertCarSchema>;
+export type SelectCar = z.infer<typeof selectCarSchema>;
+
+export type InsertDealer = z.infer<typeof insertDealerSchema>;
+export type SelectDealer = z.infer<typeof selectDealerSchema>;
+
+export type InsertBid = z.infer<typeof insertBidSchema>;
+export type SelectBid = z.infer<typeof selectBidSchema>;
+
+export type InsertAuction = z.infer<typeof insertAuctionSchema>;
+export type SelectAuction = z.infer<typeof selectAuctionSchema>;

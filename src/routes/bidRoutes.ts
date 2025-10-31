@@ -1,7 +1,14 @@
 import { Router, Request, Response } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "../app";
-import { bids, auctions, dealers } from "../db/schema";
+import { bids, auctions, dealers, insertBidSchema } from "../db/schema";
+import { validateRequest } from "../middleware/validateRequest";
+import { z } from "zod";
+
+const placeBidSchema = z.object({
+  dealerId: z.number().int().positive(),
+  amount: z.number().positive(),
+});
 
 const router = Router();
 router.get("/bids", async (req: Request, res: Response): Promise<void> => {
@@ -193,6 +200,7 @@ router.get(
 );
 router.post(
   "/auctions/:auctionId/bids",
+  validateRequest(placeBidSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const auctionId = parseInt(req.params.auctionId);
@@ -206,21 +214,7 @@ router.post(
       }
 
       const { dealerId, amount } = req.body;
-      if (!dealerId || !amount) {
-        res.status(400).json({
-          error: "Bad request",
-          message: "dealerId and amount are required",
-        });
-        return;
-      }
 
-      if (typeof amount !== "number" || amount <= 0) {
-        res.status(400).json({
-          error: "Bad request",
-          message: "Invalid bid amount",
-        });
-        return;
-      }
       const auction = await db
         .select()
         .from(auctions)
